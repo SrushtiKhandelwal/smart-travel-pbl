@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Local test run uses SQLite. For the Postgres setup in the SRS, change provider to "postgresql" and DATABASE_URL.
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Traveler {
+  id           Int       @id @default(autoincrement())
+  name         String
+  email        String    @unique
+  passwordHash String
+  phone        String?
+  failedLogins Int       @default(0)
+  lockedUntil  DateTime?
+  createdAt    DateTime  @default(now())
+  bookings     Booking[]
+}
+
+model TravelService {
+  id          Int       @id @default(autoincrement())
+  type        String // FLIGHT | TRAIN | BUS | HOTEL
+  name        String
+  source      String
+  destination String
+  price       Int
+  available   Boolean   @default(true)
+  bookings    Booking[]
+}
+
+model Booking {
+  id          Int           @id @default(autoincrement())
+  travelerId  Int
+  serviceId   Int
+  passengers  Int
+  travelDate  DateTime
+  totalAmount Int
+  status      String // PENDING | CONFIRMED | COMPLETED | CANCELLED
+  createdAt   DateTime      @default(now())
+  traveler    Traveler      @relation(fields: [travelerId], references: [id])
+  service     TravelService @relation(fields: [serviceId], references: [id])
+  payments    Payment[]
+}
+
+model Payment {
+  id        Int      @id @default(autoincrement())
+  bookingId Int
+  amount    Int
+  status    String // SUCCESS | FAILED | REFUNDED
+  createdAt DateTime @default(now())
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+}
