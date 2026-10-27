@@ -47,3 +47,4 @@ next-env.d.ts
 prisma/dev.db*
 evidence/
 !.env.example
+prisma/stp-test-*.db*

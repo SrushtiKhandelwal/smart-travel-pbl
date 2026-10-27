@@ -12,12 +12,16 @@ class Client {
     const r = await fetch(BASE + path, { method, headers: { "Content-Type": "application/json", cookie: this.cookie }, body: body ? JSON.stringify(body) : undefined });
     const sc = r.headers.get("set-cookie");
     if (sc) this.cookie = sc.split(";")[0].endsWith("=") ? "" : sc.split(";")[0];
-    return { status: r.status, j: await r.json().catch(() => ({})) as any };
+    return { status: r.status, j: await r.json().catch(() => ({})) };
   }
 }
 const PW = "Passw0rd!";
 let flightId = 0, soldOutId = 0;
 beforeAll(async () => {
+  // These integration tests reset rows. Refuse to run against an existing app database.
+  if (process.env.STP_TEST_DATABASE !== "1" || !process.env.DATABASE_URL?.includes("stp-test-")) {
+    throw new Error("Integration tests require STP_TEST_DATABASE=1 and an isolated stp-test- SQLite database");
+  }
   await prisma.payment.deleteMany(); await prisma.booking.deleteMany(); await prisma.traveler.deleteMany();
   flightId = (await prisma.travelService.findFirstOrThrow({ where: { available: true } })).id;
   soldOutId = (await prisma.travelService.findFirstOrThrow({ where: { available: false } })).id;
